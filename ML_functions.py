@@ -1,10 +1,16 @@
+import os
+import time
+import collections
+import copy
+import requests
+import sys
+# -------------------------------------------------------------------------------------------------------------------------------
 import matplotlib
 import numpy as np
 import pandas as pd  # Importing package pandas (For Panel Data Analysis)
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pandas_profiling import ProfileReport  # Import Pandas Profiling (To generate Univariate Analysis)
-
 # -------------------------------------------------------------------------------------------------------------------------------
 pd.set_option('mode.chained_assignment', None)  # To suppress pandas warnings.
 pd.set_option('display.max_colwidth', None)  # To display all the data in each column
@@ -16,31 +22,93 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.naive_bayes import GaussianNB
+from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, precision_score, \
     recall_score, fbeta_score, mean_absolute_error, mean_squared_error, r2_score
 
 #####################################################################################
-'''
-List of functions
+def function_list():
+    '''
+    The main aim of this module is to Modularize the most commonly performed activities in EDA
+     and Machine Learning using the concept of functions in Python.
 
-Feature Engineering
-    - missing_values_analysis
-    - corr_heatmap
-    - one_hot_encoding_top_x
+     ML_functions module consists of below functions
 
-Machine Learning 
-    - performance_metrics_classification
-    - performance_metrics_regression
-    - hyperparameter_tuning_logistic_regression
-    - hyperparameter_tuning_decision_tree
-    - hyperparameter_tuning_random_forest
+    Feature Engineering
+        1. missing_values_analysis
+            - Input :
+                Dataframe
+                missing_pcnt : missing data percentage
+            - Output :
+                Generates a dataframe with missing values and it's percentages in each columns.
+                Also displays the columns with missing values more than missing_pcnt%
 
-'''
+        2. corr_heatmap
+            - Input :
+                df : Input the dataframe on which you want to find the correlation
+                corr_pcnt : Finds the columns with correlation more than corr_pcnt
+            - Output :
+                Heatmap and list of columns with high correlation
+
+        3. one_hot_encoding_top_x
+            function to create the dummy variables for the most frequent labels
+            - Input : Dataframe, column name and top x labels
+            - Output : Performs OHE on top x labels
+
+    Machine Learning
+        1. performance_metrics_classification
+            - Input :   X_test, y_test,y_pred_test, model  and
+                algorithm used to build the model
+            - Output : Returns Confusion Matrix, Accuracy, Precision, Recall, Fbeta Score and Classification Report
+
+        2. performance_metrics_regression
+            - Input : X_test, y_test, model, y_test, predictions on y_test (y_test_pred) and
+                algorithm used to build the model
+            - Output : Returns Mean Absolute Error, Mean Squared Error, Root Mean Squared Error, R2 Score
+                and Adjusted R2 Score
+
+        3. hyperparameter_tuning_logistic_regression
+            - Inputs:
+                X_train, y_train, X_test,
+                model: Basic Logistic Regression model variable name,
+                n_iter: no.of iterations (default of 60),
+                cv: K fold Cross Validation (default of 10),
+                verbose: verbose (default of 10)
+            - Output:
+                y_pred_test_lr_grid : Predictions returned from Logistic Regression model using Grid Search CV technique
+                lr_grid : Logistic Regression model built using Grid Search CV technique
+
+        4. hyperparameter_tuning_decision_tree
+            - Inputs:
+                X_train, y_train, X_test,
+                model: Basic Descison Tree model variable name,
+                n_iter: no.of iterations (default of 60),
+                cv: K fold Cross Validation (default of 10),
+                verbose: verbose (default of 10)
+            - Output:
+                y_pred_test_dt_grid : Predictions returned from Decision Tree model using Grid Search CV technique
+                dt_grid : Decision Tree model built using Grid Search CV technique
+
+        5. hyperparameter_tuning_random_forest
+            - Inputs:
+                X_train, y_train, X_test,
+                model: Basic Random Forest model variable name,
+                n_iter: no.of iterations (default of 20),
+                cv: K fold Cross Validation (default of 5),
+                verbose: verbose (default of 10)
+            - Output:
+                y_pred_test_rf_grid : Predictions returned from Random Forest model using Grid Search CV technique
+                rf_grid : Random Forest built using Grid Search CV technique
+
+    '''
+    pass
+
+
 ################ ######  FEATURE ENGINEERING #############################################
 
 def corr_heatmap(df, corr_pcnt=0.8):
     '''
-    Input : Dataframe
+    Input :
                 df : Input the dataframe on which you want to find the correlation
                 corr_pcnt : Finds the columns with correlation more than corr_pcnt
     Output : Heatmap and list of columns with high correlation
@@ -77,10 +145,12 @@ def corr_heatmap(df, corr_pcnt=0.8):
 
 def missing_values_analysis(data, missing_pcnt=70):
     '''
-    Input : Dataframe
+    Input :
+                Dataframe
                 missing_pcnt : missing data percentage
-    Output : Generates a dataframe with missing values and it's percentages in each columns.
-    Also displays the columns with missing values more than missing_pcnt%
+    Output :
+                Generates a dataframe with missing values and it's percentages in each columns.
+                Also displays the columns with missing values more than missing_pcnt%
     '''
     global missing_data_columns, top_missing_data_columns
     missing_data = pd.DataFrame(data.isnull().sum(), columns=['Total Missing Values'])
@@ -115,6 +185,7 @@ def one_hot_encoding_top_x(df, variable, top_x_labels):
     top_x_labels = [y for y in df.variable.value_counts().sort_values(ascending=False).head(x).index]
 
     '''
+
     for label in top_x_labels:
         df[variable + '_' + label] = np.where(df[variable] == label, 1, 0)
 
